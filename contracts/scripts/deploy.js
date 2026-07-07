@@ -6,15 +6,30 @@ const fs  = require("fs");
 const path = require("path");
 
 async function main() {
-  const [deployer, oracle, user] = await hre.ethers.getSigners();
+  const signers = await hre.ethers.getSigners();
+  const deployer = signers[0];
+
+  let oracleAddress = process.env.ORACLE_ADDRESS;
+  if (!oracleAddress) {
+    if (signers.length > 1) {
+      oracleAddress = signers[1].address;
+    } else {
+      throw new Error("ORACLE_ADDRESS environment variable is required for single-signer networks (e.g. Sepolia)");
+    }
+  }
+
+  let userAddress = "N/A";
+  if (signers.length > 2) {
+    userAddress = signers[2].address;
+  }
 
   console.log("═══════════════════════════════════════════════════════");
   console.log("  TreasuryGuard — Deployment Script");
   console.log("═══════════════════════════════════════════════════════");
   console.log(`  Network  : ${hre.network.name}`);
   console.log(`  Deployer : ${deployer.address}`);
-  console.log(`  Oracle   : ${oracle.address}`);
-  console.log(`  User     : ${user.address}`);
+  console.log(`  Oracle   : ${oracleAddress}`);
+  console.log(`  User     : ${userAddress}`);
 
   const deployerBalance = await hre.ethers.provider.getBalance(deployer.address);
   console.log(`  Balance  : ${hre.ethers.formatEther(deployerBalance)} ETH`);
@@ -23,7 +38,7 @@ async function main() {
   // ── Deploy ──────────────────────────────────────────────────────────────
   console.log("\n▶  Deploying TreasuryGuard…");
   const TreasuryGuard = await hre.ethers.getContractFactory("TreasuryGuard");
-  const treasuryGuard = await TreasuryGuard.deploy(deployer.address, oracle.address);
+  const treasuryGuard = await TreasuryGuard.deploy(deployer.address, oracleAddress);
   await treasuryGuard.waitForDeployment();
 
   const contractAddress = await treasuryGuard.getAddress();
@@ -36,7 +51,7 @@ async function main() {
 
   const deployerHasAdmin   = await treasuryGuard.hasRole(ADMIN_ROLE,   deployer.address);
   const deployerHasDefault = await treasuryGuard.hasRole(DEFAULT_ROLE, deployer.address);
-  const oracleHasOracle    = await treasuryGuard.hasRole(ORACLE_ROLE,  oracle.address);
+  const oracleHasOracle    = await treasuryGuard.hasRole(ORACLE_ROLE,  oracleAddress);
 
   console.log("\n  Role verification:");
   console.log(`  ✔ deployer has ADMIN_ROLE          : ${deployerHasAdmin}`);
@@ -87,7 +102,7 @@ async function main() {
   console.log(`  Address  : ${contractAddress}`);
   console.log(`  Network  : ${hre.network.name} (chainId ${(await hre.ethers.provider.getNetwork()).chainId})`);
   console.log(`  Admin    : ${deployer.address}`);
-  console.log(`  Oracle   : ${oracle.address}`);
+  console.log(`  Oracle   : ${oracleAddress}`);
   console.log(`  Balance  : ${hre.ethers.formatEther(contractBalance)} ETH`);
   console.log("═══════════════════════════════════════════════════════\n");
 
