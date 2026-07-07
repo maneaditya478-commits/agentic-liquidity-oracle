@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "canisters": {
+    "AuditLog": {
+      "main": "src/AuditLog.mo",
+      "type": "motoko"
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:4943",
+      "type": "ephemeral"
+    },
+    "ic": {
+      "providers": ["https://ic0.app"],
+      "type": "persistent"
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": ""
+    }
+  }
+}

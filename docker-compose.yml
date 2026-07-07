@@ -1,0 +1,93 @@
+version: "3.9"
+
+services:
+  # ─────────────────────────────────────────
+  # PostgreSQL 16 — persistent treasury data
+  # ─────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: treasury_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: oracle
+      POSTGRES_PASSWORD: oracle_secret
+      POSTGRES_DB: treasury_oracle
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oracle -d treasury_oracle"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────────
+  # Hardhat — local EVM node
+  # ─────────────────────────────────────────
+  hardhat:
+    build:
+      context: ./contracts
+      dockerfile: Dockerfile
+    container_name: treasury_hardhat
+    restart: unless-stopped
+    ports:
+      - "8545:8545"
+    entrypoint: >
+      sh -c "
+      npx hardhat node --hostname 0.0.0.0 &
+      sleep 3;
+      npx hardhat run scripts/deploy.js --network localhost;
+      wait
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf -X POST --data '{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":1}' http://localhost:8545 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ─────────────────────────────────────────
+  # FastAPI — AI Agent + REST API Gateway
+  # ─────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: treasury_backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://oracle:oracle_secret@postgres:5432/treasury_oracle
+      EVM_RPC_URL: http://hardhat:8545
+      CONTRACT_ADDRESS: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      hardhat:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+
+  # ─────────────────────────────────────────
+  # React Frontend — Vite dev server
+  # ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: treasury_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+    driver: local

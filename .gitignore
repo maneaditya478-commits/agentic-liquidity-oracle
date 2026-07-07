@@ -1,0 +1,69 @@
+# ─── Environment & Secrets ───────────────────────────────────────────
+.env
+*.key
+*.pem
+*.pfx
+*.db
+*.sqlite
+
+
+# ─── Python ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# ─── Node / npm ──────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp
+.pnp.js
+dist/
+.cache/
+
+# ─── Hardhat ─────────────────────────────────────────────────────────
+artifacts/
+cache/
+typechain-types/
+.contract_address
+
+# ─── Docker ──────────────────────────────────────────────────────────
+.docker/
+
+# ─── ICP / dfx ───────────────────────────────────────────────────────
+.dfx/
+*.did
+
+# ─── OS ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ─── IDE ─────────────────────────────────────────────────────────────
+.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ─── Vite ────────────────────────────────────────────────────────────
+frontend/dist/
+frontend/.vite/
