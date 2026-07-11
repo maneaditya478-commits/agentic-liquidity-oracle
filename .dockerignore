@@ -1,0 +1,11 @@
+.git
+.gitignore
+.env
+venv
+**/venv
+**/node_modules
+**/.env
+**/*.db
+**/*.sqlite
+**/cache
+**/artifacts
